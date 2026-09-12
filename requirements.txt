@@ -1,0 +1,4 @@
+rich
+questionary
+psutil
+watchdog
