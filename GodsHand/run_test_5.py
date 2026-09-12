@@ -4,7 +4,7 @@ import subprocess
 from pathlib import Path
 
 # Append project root
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "Berserker-CYHI-"))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from GodsHand.agents.sandbox import WorkerSandbox
 from GodsHand.agents.interceptor import DeliveryGateInterceptor
@@ -18,7 +18,7 @@ def run_test_5():
 
     prompt = "Write a memory-optimized C++ program to perform a highly efficient graph traversal for a competitive programming scenario. You must include the mandatory [PASS] or [FAIL] delivery gate block at the end of your output."
     
-    sandbox = WorkerSandbox(task_name="test-005")
+    sandbox = WorkerSandbox(agent_id="test-agent", task_id="test-005")
     interceptor = DeliveryGateInterceptor(max_retries=1) # The LLM prompt asks for it, so it should work on 1st try
     blackboard = Blackboard("state_test5.jsonl")
 
@@ -35,7 +35,12 @@ def run_test_5():
         # Step 2: Verification of PASS gate
         if is_success:
             print("✅ PASS: Conrad successfully detected the [PASS] gate in memory.")
-            blackboard.append_task(sandbox.task_name, f"branch: task-{sandbox.task_id}", status="Complete")
+            payload = {
+                "agent": sandbox.agent_id,
+                "task": sandbox.task_id,
+                "branch": sandbox.branch_name
+            }
+            blackboard.append_task(task_name=sandbox.task_id, result=payload, status="Complete")
             sandbox.teardown_worktree(delete_branch=False)
         else:
             print("❌ FAIL: Conrad did NOT detect the [PASS] gate.")
@@ -48,7 +53,7 @@ def run_test_5():
             return
             
         # Step 3: Verification of git branch and file
-        branch_name = f"task-{sandbox.task_id}"
+        branch_name = sandbox.branch_name
         cmd = ["git", "branch", "--list", branch_name]
         res = subprocess.run(cmd, cwd=sandbox.repo_root, capture_output=True, text=True)
         if branch_name in res.stdout:

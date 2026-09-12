@@ -41,11 +41,11 @@ def run_conrad_repl():
             full_prompt = f"{system_prompt}\n\nUser Request: {user_input}"
             
             # Execute with interception via Sandbox
-            # task_name can just be the first few words of the prompt
-            task_name = user_input.strip()[:20].replace(" ", "_")
-            sandbox = WorkerSandbox(task_name=task_name)
+            # We'll use the first few characters of the prompt as a custom task_id
+            custom_task_id = user_input.strip()[:20].replace(" ", "_")
+            sandbox = WorkerSandbox(agent_id="conrad", task_id=custom_task_id)
             
-            print(f"Setting up sandbox for task: {task_name}...")
+            print(f"Setting up sandbox for task: {sandbox.task_id}...")
             sandbox.setup_worktree()
             
             try:
@@ -58,7 +58,12 @@ def run_conrad_repl():
                 
                 if is_success:
                     print("Task verified successfully. Appending to blackboard.")
-                    blackboard.append_task(task_name=task_name, result=f"branch: task-{sandbox.task_id}")
+                    payload = {
+                        "agent": sandbox.agent_id,
+                        "task": sandbox.task_id,
+                        "branch": sandbox.branch_name
+                    }
+                    blackboard.append_task(task_name=sandbox.task_id, result=payload, status="Complete")
                     # Teardown but keep branch for later review/merge
                     sandbox.teardown_worktree(delete_branch=False)
                 else:

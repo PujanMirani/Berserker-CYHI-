@@ -13,9 +13,11 @@ class BatchMerger:
         branches = []
         for t in tasks:
             if t.get("status") == "Complete":
-                result_text = t.get("result", "")
-                if result_text.startswith("branch: "):
-                    branches.append(result_text.split("branch: ")[1])
+                result = t.get("result")
+                if isinstance(result, dict) and "branch" in result:
+                    branches.append(result["branch"])
+                elif isinstance(result, str) and result.startswith("branch: "):
+                    branches.append(result.split("branch: ")[1])
         return branches
 
     def merge_all(self):

@@ -5,11 +5,12 @@ import uuid
 from pathlib import Path
 
 class WorkerSandbox:
-    def __init__(self, task_name, base_image="docker.io/library/python:3.11-slim"):
-        self.task_name = task_name
-        self.task_id = str(uuid.uuid4())[:8]
+    def __init__(self, agent_id, task_id=None, base_image="docker.io/library/python:3.11-slim"):
+        self.agent_id = agent_id
+        self.task_id = task_id if task_id else f"task-{str(uuid.uuid4())[:8]}"
+        self.branch_name = f"{self.agent_id}/{self.task_id}"
         self.base_image = base_image
-        self.worktree_dir = Path(f"/tmp/godshand_worktrees/task-{self.task_id}")
+        self.worktree_dir = Path(f"/tmp/godshand_worktrees/{self.task_id}")
         
         
         # Determine repo root (where this file's parent's parent is)
@@ -21,10 +22,10 @@ class WorkerSandbox:
         """
         self.worktree_dir.parent.mkdir(parents=True, exist_ok=True)
         
-        # git worktree add -b task-<id> <path>
-        cmd = ["git", "worktree", "add", "-b", f"task-{self.task_id}", str(self.worktree_dir)]
+        # git worktree add -b <branch_name> <path>
+        cmd = ["git", "worktree", "add", "-b", self.branch_name, str(self.worktree_dir)]
         subprocess.run(cmd, cwd=self.repo_root, check=True, capture_output=True)
-        print(f"Created isolated worktree at {self.worktree_dir} on branch task-{self.task_id}")
+        print(f"Created isolated worktree at {self.worktree_dir} on branch {self.branch_name}")
 
     def teardown_worktree(self, delete_branch=False):
         """
@@ -36,8 +37,8 @@ class WorkerSandbox:
             subprocess.run(cmd, cwd=self.repo_root, check=False, capture_output=True)
             
         if delete_branch:
-            # git branch -D task-<id>
-            cmd = ["git", "branch", "-D", f"task-{self.task_id}"]
+            # git branch -D <branch_name>
+            cmd = ["git", "branch", "-D", self.branch_name]
             subprocess.run(cmd, cwd=self.repo_root, check=False, capture_output=True)
             
     def run_task(self, prompt, error_feedback=None):
