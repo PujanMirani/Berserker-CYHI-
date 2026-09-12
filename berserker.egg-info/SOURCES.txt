@@ -1,0 +1,9 @@
+README.md
+main.py
+setup.py
+berserker.egg-info/PKG-INFO
+berserker.egg-info/SOURCES.txt
+berserker.egg-info/dependency_links.txt
+berserker.egg-info/entry_points.txt
+berserker.egg-info/requires.txt
+berserker.egg-info/top_level.txt
