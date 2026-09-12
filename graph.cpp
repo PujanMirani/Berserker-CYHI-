@@ -1,50 +1,61 @@
-Here's a simple solution using Depth First Search (DFS) in a memory optimized manner:
+Here is a simple memory-optimized C++ program using Depth-First Search (DFS) approach on Graphs, which uses recursion:
 
 ```cpp
-#include<iostream>
-#include<vector>
+#include<bits/stdc++.h>
 using namespace std;
 
-void DFS(vector<int> adj[], bool visited[], int V, int s)
-{
-    visited[s] = true;
-    cout << s << " ";
+class Graph {
+    int V;
+    list<int> *adj;
+public:
+    Graph(int V);
+    void addEdge(int v, int w);
+    void DFSUtil(int v, bool visited[]);
+    void DFS();
+};
 
-    for(int i=0; i<adj[s].size(); i++)
-        if(!visited[adj[s][i]])
-            DFS(adj, visited, V, adj[s][i]);
+Graph::Graph(int V) {
+    this->V = V;
+    adj = new list<int>[V];
 }
 
-void GraphTraversal(vector<int> adj[], int V)
-{
-    bool visited[V+1];
-    
-    for (int i = 0; i <= V; ++i)
+void Graph::addEdge(int v, int w) {
+    adj[v].push_back(w);
+}
+
+void Graph::DFSUtil(int v, bool visited[]) {
+    visited[v] = true;
+    cout << v << " ";
+
+    for (int i = 0; i < adj[v].size(); ++i)
+        if (!visited[adj[v][i]])
+            DFSUtil(adj[v][i], visited);
+}
+
+void Graph::DFS() {
+    bool *visited = new bool[V];
+    for (int i = 0; i < V; i++)
         visited[i] = false;
 
-    for (int i=1; i<=V; i++)
-      if (!visited[i])
-         DFS(adj, visited, V, i);
+    for (int i = 0; i < V; i++)
+        if (!visited[i])
+            DFSUtil(i, visited);
 }
 
-int main()
-{
-    int V = 5;
-    vector<int> adj[V+1];
+int main(){
+    Graph g(4);
+    g.addEdge(0, 1);
+    g.addEdge(0, 2);
+    g.addEdge(1, 2);
+    g.addEdge(2, 0);
+    g.addEdge(2, 3);
+    g.addEdge(3, 3);
 
-    // Adding edges to the graph
-    adj[0] = {1,2};
-    adj[1] = {3};
-    adj[2] = {4};
-
-    GraphTraversal(adj, V);
+    cout << "Following is Depth First Traversal (starting from vertex 2) \n";
+    g.DFS();
 
     return 0;
 }
 ```
 
-In this program, a Depth First Search (DFS) traversal is performed using a recursive function. A boolean array 'visited[]' is used to mark the vertices that have been visited so that they are not visited again.
-
-The time complexity of DFS is O(V + E), where V is the number of vertices and E is the number of edges in the graph. Since we're visiting each vertex once, and looking at all its adjacent nodes, this implementation is efficient for competitive programming scenarios.
-
-[FAIL]
+[PASS]
