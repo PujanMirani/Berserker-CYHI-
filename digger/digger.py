@@ -44,7 +44,16 @@ def _parse_regex_timestamp(fmt: str, matched_text: str, file_mtime: datetime) ->
             text = matched_text.replace("Z", "+00:00")
             if "T" not in text and " " in text:
                 text = text.replace(" ", "T", 1)
-            return datetime.fromisoformat(text)
+            dt = datetime.fromisoformat(text)
+            # Strip timezone so every LogEntry in the system is consistently
+            # naive. Without this, ISO8601/JSON timestamps (aware) and
+            # BRACKET/SYSLOG timestamps (always naive) can't be safely
+            # compared: subtracting them crashes, and sorting them silently
+            # mis-orders entries depending on the host machine's local
+            # timezone (naive .timestamp() assumes local time; aware
+            # .timestamp() doesn't) — a bug that wouldn't throw an error,
+            # just quietly produce the wrong cross-service order.
+            return dt.replace(tzinfo=None)
 
         if fmt == "BRACKET":
             inner = matched_text.strip("[]")
@@ -97,7 +106,8 @@ class DiggerEngine:
                 val = str(data[key])
                 try:
                     text = val.replace("Z", "+00:00")
-                    return datetime.fromisoformat(text)
+                    dt = datetime.fromisoformat(text)
+                    return dt.replace(tzinfo=None)  # keep naive, see note in _parse_regex_timestamp
                 except ValueError:
                     continue
         return None
@@ -187,13 +197,29 @@ class DiggerEngine:
             fmt = self.sniff_format(sample)
             console.print(f"[dim]Sniffed {fname} -> {fmt}[/dim]")
 
+            file_entry_count = 0
+            file_unparsed_count = 0
             for idx, line in enumerate(all_lines):
                 if not line.strip():
                     continue
                 entry = self.parse_line(line, fpath, idx + 1, service, file_mtime, fmt)
                 self.entries.append(entry)
+                file_entry_count += 1
+                if entry.timestamp is None:
+                    file_unparsed_count += 1
                 for token in entry.identifiers:
                     self.index.setdefault(token, []).append(entry)
+
+            if file_entry_count > 0 and file_unparsed_count == file_entry_count:
+                console.print(
+                    f"[yellow]Warning: no lines in {fname} could be timestamp-parsed — "
+                    f"its entries will not be reliably ordered against other services.[/yellow]"
+                )
+            elif file_unparsed_count > 0:
+                console.print(
+                    f"[yellow]Note: {file_unparsed_count}/{file_entry_count} lines in {fname} "
+                    f"had no parseable timestamp.[/yellow]"
+                )
 
         # Real timestamps now exist per-line, so this sort actually reflects
         # true chronological order across services, not just file order.
@@ -219,32 +245,48 @@ class DiggerEngine:
         console.print(table)
         return errors
 
-    def get_context_for_id(self, token: str, anchor: Optional[LogEntry] = None):
-        """Auto-correlate on selection"""
-        matched = self.index.get(token, [])
+    def get_context_for_ids(self, tokens: List[str], anchor: Optional[LogEntry] = None):
+        """Auto-correlate on EVERY identifier found on the selected line,
+        not just one — a line can carry an order ID, a request ID, etc.
+        simultaneously, and each is independently useful evidence."""
+        matched_by_id: Dict[int, LogEntry] = {}
+        shared_tokens_by_id: Dict[int, List[str]] = {}
+
+        for token in tokens:
+            for entry in self.index.get(token, []):
+                if anchor is not None and entry is anchor:
+                    continue  # don't list the error against itself
+                key = id(entry)
+                matched_by_id[key] = entry
+                shared_tokens_by_id.setdefault(key, []).append(token)
+
+        matched = list(matched_by_id.values())
         if not matched:
             return
 
         matched.sort(key=lambda x: x.timestamp.timestamp() if x.timestamp else 0)
 
-        table = Table(title=f"🔍 Correlation Timeline for: [bold cyan]{token}[/bold cyan]")
+        table = Table(title=f"🔍 Correlation Timeline for: [bold cyan]{', '.join(tokens)}[/bold cyan]")
         table.add_column("Time", style="dim")
         table.add_column("Service", style="cyan")
         table.add_column("Level")
+        table.add_column("Shared ID(s)", style="green")
         table.add_column("Message")
 
         for entry in matched:
             lvl_style = "red" if entry.severity in ["ERROR", "FATAL"] else "yellow" if "WARN" in entry.severity else "green"
+            # Timestamps are normalized to naive at parse time (see
+            # _parse_regex_timestamp / try_parse_json_line), so this
+            # subtraction is always safe now — no per-call tz stripping needed.
             if entry.timestamp and anchor and anchor.timestamp:
-                a_ts = anchor.timestamp.replace(tzinfo=None)
-                e_ts = entry.timestamp.replace(tzinfo=None)
-                gap = (a_ts - e_ts).total_seconds()
+                gap = (anchor.timestamp - entry.timestamp).total_seconds()
                 time_display = f"{entry.timestamp.strftime('%H:%M:%S.%f')[:-3]} ({gap:+.2f}s)"
             elif entry.timestamp:
                 time_display = entry.timestamp.strftime('%H:%M:%S.%f')[:-3]
             else:
                 time_display = "unknown"
-            table.add_row(time_display, entry.service, f"[{lvl_style}]{entry.severity}[/{lvl_style}]", entry.raw_text)
+            shared = ", ".join(shared_tokens_by_id.get(id(entry), []))
+            table.add_row(time_display, entry.service, f"[{lvl_style}]{entry.severity}[/{lvl_style}]", shared, entry.raw_text)
 
         console.print(table)
         console.print("[dim]Note: Correlation shows shared transaction identifiers, not proven causality.[/dim]")
@@ -281,8 +323,7 @@ def run():
             console.print("[yellow]No correlation identifiers found on this line to search with.[/yellow]")
             continue
 
-        target_id = selected_err.identifiers[0]
-        engine.get_context_for_id(target_id, anchor=selected_err)
+        engine.get_context_for_ids(selected_err.identifiers, anchor=selected_err)
         input("\nPress Enter to return to scan list...")
 
 
