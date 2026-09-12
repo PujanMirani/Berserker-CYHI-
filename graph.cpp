@@ -1,61 +1,59 @@
-Here is a simple memory-optimized C++ program using Depth-First Search (DFS) approach on Graphs, which uses recursion:
+To write an efficient memory-optimized program, we can use either Breadth First Search (BFS) or Depth First Search (DFS). For simplicity and efficiency in terms of memory usage, we'll implement BFS using a queue data structure.
+
+Here is a basic template that uses C++ STL:
 
 ```cpp
 #include<bits/stdc++.h>
 using namespace std;
 
-class Graph {
-    int V;
-    list<int> *adj;
-public:
-    Graph(int V);
-    void addEdge(int v, int w);
-    void DFSUtil(int v, bool visited[]);
-    void DFS();
-};
+vector<int> bfs(int n, vector<vector<int>>& adjList) {
+    vector<bool> visited(n, false);
+    queue<int> q;
+    vector<int> result;
 
-Graph::Graph(int V) {
-    this->V = V;
-    adj = new list<int>[V];
+    // start from node 0
+    visited[0] = true;
+    q.push(0);
+
+    while (!q.empty()) {
+        int currNode = q.front();
+        q.pop();
+
+        result.push_back(currNode); // process the current node
+
+        for (auto neighbor : adjList[currNode]) {
+            if (!visited[neighbor]) {
+                visited[neighbor] = true;
+                q.push(neighbor);
+            }
+        }
+    }
+
+    return result;
 }
 
-void Graph::addEdge(int v, int w) {
-    adj[v].push_back(w);
-}
+int main() {
+    int n, m; // number of nodes and edges
+    cin >> n >> m;
 
-void Graph::DFSUtil(int v, bool visited[]) {
-    visited[v] = true;
-    cout << v << " ";
+    vector<vector<int>> adjList(n);
 
-    for (int i = 0; i < adj[v].size(); ++i)
-        if (!visited[adj[v][i]])
-            DFSUtil(adj[v][i], visited);
-}
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        // if the graph is undirected
+        adjList[u].push_back(v);
+        adjList[v].push_back(u);
+    }
 
-void Graph::DFS() {
-    bool *visited = new bool[V];
-    for (int i = 0; i < V; i++)
-        visited[i] = false;
+    vector<int> result = bfs(n, adjList);
 
-    for (int i = 0; i < V; i++)
-        if (!visited[i])
-            DFSUtil(i, visited);
-}
-
-int main(){
-    Graph g(4);
-    g.addEdge(0, 1);
-    g.addEdge(0, 2);
-    g.addEdge(1, 2);
-    g.addEdge(2, 0);
-    g.addEdge(2, 3);
-    g.addEdge(3, 3);
-
-    cout << "Following is Depth First Traversal (starting from vertex 2) \n";
-    g.DFS();
+    for (auto node : result) cout << node << " ";
 
     return 0;
 }
 ```
 
-[PASS]
+This program reads in a number of nodes `n` and edges `m`, then reads the pairs of connected nodes. It constructs an adjacency list representation of the graph and performs BFS starting from node 0. The `visited` array helps keep track of visited nodes to avoid revisiting them. When a node is processed (i.e., added to the `result` vector), it is removed from the queue and its unvisited neighbors are added to the queue.
+
+[FAIL] - This solution assumes that the graph is undirected, which may not be true in some competitive programming scenarios. In such cases, additional checks should be added to handle directed graphs appropriately. Additionally, the input/output is assumed to follow a specific format, which may vary from problem to problem. The time complexity of this BFS implementation is O(V + E), where V is the number of vertices and E is the number of edges in the graph.
