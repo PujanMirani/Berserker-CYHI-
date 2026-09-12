@@ -14,6 +14,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
+            "griffith = omnix.triage:app",
             "omnix = omnix.main:app",
         ],
     },

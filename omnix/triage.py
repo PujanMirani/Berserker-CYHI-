@@ -54,8 +54,9 @@ def get_git_info():
 def api_request(url, token, stream=False):
     headers = {
         "Accept": "application/vnd.github.v3+json",
-        "Authorization": f"Bearer {token}"
     }
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
     response = requests.get(url, headers=headers, stream=stream)
     response.raise_for_status()
     if stream:
@@ -77,9 +78,9 @@ def fetch_failed_jobs(owner, repo, run_id, token):
 
 def download_job_logs(owner, repo, job_id, token):
     url = f"https://api.github.com/repos/{owner}/{repo}/actions/jobs/{job_id}/logs"
-    headers = {
-        "Authorization": f"Bearer {token}"
-    }
+    headers = {}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
     # Log endpoint redirects to the raw log text file
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
@@ -131,10 +132,13 @@ def parse_logs(log_text):
                 if m:
                     failing_test_cmd = m.group(1)
             
-            # Stop if we hit empty lines or end of error typical markers
+            # Stop if we hit the GitHub Actions process completion error or trailing noise
+            if "##[error]Process completed with exit code" in line:
+                break
+            
+            # Or stop if we hit multiple empty lines
             if not line.strip() and len(error_block) > 5:
-                # Keep accumulating if we think it's still part of the stacktrace, but we'll stop after a few empty lines
-                pass
+                break
 
     if not error_block:
         # Fallback to last 50 lines
@@ -152,11 +156,46 @@ def trigger_alert(passed):
         console.print("[bold red]❌ CI Failed![/bold red]")
         print("\a\a\a", end="")
 
+def check_and_setup_ci():
+    workflows_dir = ".github/workflows"
+    has_workflows = os.path.exists(workflows_dir) and any(f.endswith(".yml") or f.endswith(".yaml") for f in os.listdir(workflows_dir))
+    if not has_workflows:
+        if questionary.confirm("No GitHub Actions CI pipeline found. Would you like Griffith to automatically create one for you?").ask():
+            os.makedirs(workflows_dir, exist_ok=True)
+            ci_content = \"\"\"name: Griffith Auto CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Run Tests
+        run: |
+          # Add your test commands here
+          echo "Griffith Auto CI configured."
+\"\"\"
+            with open(os.path.join(workflows_dir, "griffith_ci.yml"), "w") as f:
+                f.write(ci_content)
+            console.print("[green]✅ CI pipeline created at .github/workflows/griffith_ci.yml[/green]")
+            console.print("Please run [bold cyan]git add . && git commit -m 'Add CI' && git push[/bold cyan] to trigger it.")
+            raise typer.Exit(0)
+
 def run_triage(watch: bool = False):
+    check_and_setup_ci()
     token = get_github_token()
     if not token:
-        console.print("[red]GitHub token not found. Please set GH_TOKEN or GITHUB_TOKEN environment variable.[/red]")
-        raise typer.Exit(1)
+        console.print("[yellow]ℹ️ No GitHub token found. Operating in public-repo mode (rate limits apply).[/yellow]")
+
     
     owner, repo, branch = get_git_info()
     console.print(f"Tracking repository: [bold cyan]{owner}/{repo}[/bold cyan] on branch: [bold cyan]{branch}[/bold cyan]")
