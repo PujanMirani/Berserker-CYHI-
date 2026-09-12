@@ -1,0 +1,3 @@
+[10:02:14.980] [INFO] Payment service received payload for ord_89421
+[10:02:15.100] [WARN] Gateway latency detected for ord_89421
+[10:02:15.450] [FATAL] Connection reset by bank peer for ord_89421

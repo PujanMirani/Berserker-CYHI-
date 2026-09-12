@@ -1,0 +1,4 @@
+2026-09-12T10:02:14.200Z [INFO] Container stdout: mixed output started for ord_89421
+[10:02:14.210] [INFO] legacy-component: starting task for ord_89421
+{"ts": "2026-09-12T10:02:14.220Z", "level": "DEBUG", "msg": "json-component: task running for ord_89421"}
+Jan 12 10:02:14 [INFO] syslog-component: task finished for ord_89421

@@ -10,13 +10,12 @@ def main():
         sys.exit(1)
 
     console = Console()
-    console.print(Panel.fit("[bold cyan]🛠  Hackathon Toolkit[/bold cyan]\n[dim]Select a tool to launch[/dim]", border_style="cyan"))
+    console.print(Panel.fit("[bold cyan]🛠  Berserker Hackathon Toolkit[/bold cyan]\n[dim]Select a tool to launch[/dim]", border_style="cyan"))
 
     choices = [
-        "🔍 digger     — Correlate logs across services",
-        "🔫 portkiller — Kill process bound to a port",
-        "🔧 tool3      — Teammate 3 Tool",
-        "📦 tool4      — Teammate 4 Tool",
+        "1️⃣  berserker   — Cross-Service Log Correlation",
+        "2️⃣  griffith    — CI/CD Pipeline Error Summarizer",
+        "3️⃣  GodsHand    — Local LLM Sandbox & Agent Manager",
         "❌ Exit"
     ]
 
@@ -29,22 +28,33 @@ def main():
         console.print("[yellow]Goodbye![/yellow]")
         return
 
-    if "digger" in choice:
+    if "berserker" in choice:
         try:
             from digger.digger import run as digger_run
             digger_run()
         except ImportError:
-            console.print("[red]❌ digger module not found or feature branch not merged yet.[/red]")
-    elif "portkiller" in choice:
+            console.print("[red]❌ digger module not found. Are you on the right branch?[/red]")
+            
+    elif "griffith" in choice:
         try:
-            from portkiller.portkiller import run as portkiller_run
-            portkiller_run()
+            from cicd_parser.parser import run as parser_run
+            repo_url = questionary.text(
+                "Enter GitHub Repository (e.g., owner/repo):",
+                default="owner/repo"
+            ).ask()
+            if repo_url and repo_url != "owner/repo":
+                parser_run(repo_url)
+            else:
+                console.print("[yellow]Invalid repository. Exiting.[/yellow]")
         except ImportError:
-            console.print("[yellow]🔫 portkiller (Stub): Teammate portkiller code will run here once implemented.[/yellow]")
-    elif "tool3" in choice:
-        console.print("[yellow]🔧 Tool 3 (Stub): Teammate 3 code will run here.[/yellow]")
-    elif "tool4" in choice:
-        console.print("[yellow]📦 Tool 4 (Stub): Teammate 4 code will run here.[/yellow]")
+            console.print("[yellow]🚧 griffith is currently under construction on the griffith branch.[/yellow]")
+            
+    elif "GodsHand" in choice:
+        try:
+            from llm_sandbox.sandbox import run as sandbox_run
+            sandbox_run()
+        except ImportError:
+            console.print("[yellow]🚧 GodsHand is currently under construction on the conrad branch.[/yellow]")
 
 if __name__ == "__main__":
     main()
