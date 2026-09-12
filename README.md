@@ -1,4 +1,4 @@
-# 🛠 Hackathon Toolkit
+# 🛠 Berserker Toolkit
 
 A unified CLI toolkit containing 4 essential developer tools for fast debugging and system management.
 
@@ -9,7 +9,7 @@ Requires **Python 3.8+**.
 ```bash
 # Clone repository
 git clone <repo-url>
-cd hackathon-toolkit
+cd berserker
 
 # Install dependencies
 pip install -r requirements.txt
