@@ -1,0 +1,11 @@
+typer
+rich
+requests
+questionary
+watchdog
+psutil
+prompt_toolkit==3.0.38
+filelock==3.12.2
+instructor==0.2.9
+pydantic==2.1.1
+podman==4.5.0

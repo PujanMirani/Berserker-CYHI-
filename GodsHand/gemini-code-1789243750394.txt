@@ -1,0 +1,9 @@
+prompt_toolkit==3.0.38
+rich==13.4.2
+psutil==5.9.5
+watchdog==3.0.0
+questionary==1.10.0
+filelock==3.12.2
+instructor==0.2.9
+pydantic==2.1.1
+podman==4.5.0

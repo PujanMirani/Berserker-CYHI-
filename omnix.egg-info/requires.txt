@@ -1,6 +1,0 @@
-typer
-rich
-requests
-questionary
-watchdog
-psutil
