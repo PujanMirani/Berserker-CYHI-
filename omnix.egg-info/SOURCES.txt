@@ -1,0 +1,13 @@
+README.md
+setup.py
+omnix/__init__.py
+omnix/doctor.py
+omnix/main.py
+omnix/sweep.py
+omnix/triage.py
+omnix.egg-info/PKG-INFO
+omnix.egg-info/SOURCES.txt
+omnix.egg-info/dependency_links.txt
+omnix.egg-info/entry_points.txt
+omnix.egg-info/requires.txt
+omnix.egg-info/top_level.txt

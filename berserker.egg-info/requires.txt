@@ -1,0 +1,8 @@
+typer
+rich
+requests
+questionary
+watchdog
+psutil
+prompt_toolkit>=3.0.0
+google-genai>=0.3.0

@@ -1,0 +1,4 @@
+[console_scripts]
+berserker = berserker_cli.cli:main
+griffith = omnix.triage:app
+omnix = omnix.main:app

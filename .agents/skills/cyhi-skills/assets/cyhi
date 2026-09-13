@@ -315,7 +315,7 @@ def cmd_prompt(ctx: Ctx, args):
 
 def cmd_log(ctx: Ctx, args):
     """Append an action record describing what the agent just did."""
-    payload = stdin_json()
+    payload = stdin_json() if os.environ.get("CYHI_STDIN") else {}
     summary = args.summary or payload.get("summary") or ""
     otype = (args.type or payload.get("type") or "other").lower()
     if otype not in TYPES:
