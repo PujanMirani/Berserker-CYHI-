@@ -162,7 +162,7 @@ def check_and_setup_ci():
     if not has_workflows:
         if questionary.confirm("No GitHub Actions CI pipeline found. Would you like Griffith to automatically create one for you?").ask():
             os.makedirs(workflows_dir, exist_ok=True)
-            ci_content = \"\"\"name: Griffith Auto CI
+            ci_content = """name: Griffith Auto CI
 
 on: [push, pull_request]
 
@@ -183,7 +183,7 @@ jobs:
         run: |
           # Add your test commands here
           echo "Griffith Auto CI configured."
-\"\"\"
+"""
             with open(os.path.join(workflows_dir, "griffith_ci.yml"), "w") as f:
                 f.write(ci_content)
             console.print("[green]✅ CI pipeline created at .github/workflows/griffith_ci.yml[/green]")

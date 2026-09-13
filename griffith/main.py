@@ -1,8 +1,8 @@
 import typer
-from omnix import triage, doctor, sweep
+from griffith import triage, doctor, sweep
 
 app = typer.Typer(
-    name="omnix",
+    name="griffith",
     help="Unified Developer CLI: Hackathon Toolkit",
     add_completion=False,
 )

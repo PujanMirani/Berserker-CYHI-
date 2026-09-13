@@ -5,7 +5,7 @@ from rich.console import Console
 console = Console()
 
 class DeliveryGateInterceptor:
-    def __init__(self, max_retries=3):
+    def __init__(self, max_retries=1): # changed from 3 to 1 
         self.max_retries = max_retries
 
     def has_pass_fail_gate(self, response):
