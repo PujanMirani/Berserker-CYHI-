@@ -293,44 +293,45 @@ class DiggerEngine:
 
 
 def run():
-    import questionary
     console.print(Panel.fit("[bold magenta]digger — Cross-Service Log Correlation[/bold magenta]"))
 
     log_dir = "./logs"
     engine = DiggerEngine()
     engine.load_logs_from_dir(log_dir)
 
-    while True:
-        errors = engine.digger_scan()
-        if not errors:
-            break
-
-        choices = [f"[{i+1}] {e.service}: {e.raw_text[:40]}..." for i, e in enumerate(errors)]
-        choices.append("Exit")
-
-        choice = questionary.select(
-            "Select an error to auto-correlate (or Exit):",
-            choices=choices
-        ).ask()
-
-        if not choice or choice == "Exit":
-            break
-
-        idx = int(choice.split("]")[0][1:]) - 1
-        selected_err = errors[idx]
-
-        if not selected_err.identifiers:
-            console.print("[yellow]No correlation identifiers found on this line to search with.[/yellow]")
-            continue
-
-        engine.get_context_for_ids(selected_err.identifiers, anchor=selected_err)
-        input("\nPress Enter to return to scan list...")
-        
     with open("combined.log", "w", encoding="utf-8") as f:
         for entry in engine.entries:
             time_str = entry.timestamp.strftime('%H:%M:%S.%f')[:-3] if entry.timestamp else "unknown"
             f.write(f"[{time_str}] [{entry.severity}] {entry.service}: {entry.raw_text}\n")
     console.print("\n[green]Saved full chronological combined log to combined.log[/green]")
+
+    console.print("[dim]Type 'help' for commands, or 'exit' to quit.[/dim]")
+    while True:
+        try:
+            cmd = input("\ndigger> ").strip()
+        except (KeyboardInterrupt, EOFError):
+            break
+            
+        if not cmd:
+            continue
+            
+        parts = cmd.split()
+        base_cmd = parts[0].lower()
+        
+        if base_cmd in ["exit", "quit"]:
+            break
+        elif base_cmd == "errors":
+            engine.digger_scan()
+        elif base_cmd == "trace":
+            if len(parts) < 2:
+                console.print("[red]Usage: trace <UID>[/red]")
+            else:
+                uid = parts[1]
+                engine.get_context_for_ids([uid])
+        elif base_cmd == "help":
+            console.print("Commands: [cyan]errors[/cyan], [cyan]trace <UID>[/cyan], [cyan]exit[/cyan]")
+        else:
+            console.print(f"[red]Unknown command: {base_cmd}[/red]")
 
 
 if __name__ == "__main__":
