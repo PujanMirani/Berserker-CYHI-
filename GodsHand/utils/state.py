@@ -5,8 +5,10 @@ from pathlib import Path
 
 class Blackboard:
     def __init__(self, state_file="state.jsonl"):
-        self.state_file = Path(state_file)
-        self.lock_file = Path(f"{state_file}.lock")
+        # Resolve the repository root to prevent duplicating state.jsonl across directories
+        repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        self.state_file = Path(repo_root) / state_file
+        self.lock_file = Path(f"{self.state_file}.lock")
         
         # Ensure the file exists
         if not self.state_file.exists():
