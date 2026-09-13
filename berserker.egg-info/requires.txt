@@ -1,3 +1,8 @@
-rich>=13.0.0
-questionary>=2.0.0
-requests>=2.30.0
+typer
+rich
+requests
+questionary
+watchdog
+psutil
+prompt_toolkit>=3.0.0
+google-genai>=0.3.0

@@ -1,3 +1,0 @@
-2026-09-12T10:02:14.001Z [INFO] Incoming request for ord_89421 req-1001
-2026-09-12T10:02:14.050Z [INFO] Processing checkout ord_89421
-2026-09-12T10:02:15.500Z [ERROR] HTTP 500 timeout for ord_89421

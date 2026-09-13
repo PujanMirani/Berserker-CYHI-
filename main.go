@@ -205,13 +205,25 @@ func main() {
 	scriptPath := finalModel.selected.scriptPath
 	branchName := finalModel.selected.branch
 
+	// Resolve Python Executable
+	pythonExec := os.Getenv("BERSERKER_PYTHON_EXEC")
+	if pythonExec == "" {
+		pythonExec = "./venv/bin/python" // fallback for local dev
+	}
+
+	// Resolve Script Path
+	repoRoot := os.Getenv("BERSERKER_REPO_ROOT")
+	if repoRoot != "" {
+		scriptPath = repoRoot + "/" + scriptPath
+	}
+
 	if _, err := os.Stat(scriptPath); os.IsNotExist(err) {
-		fmt.Printf("\n🚧 [Warning] The logic for this tool is missing.\n")
+		fmt.Printf("\n🚧 [Warning] The logic for this tool is missing at %s\n", scriptPath)
 		fmt.Printf("Please make sure the '%s' branch has been merged into main!\n\n", branchName)
 		return
 	}
 
-	cmd := exec.Command("./venv/bin/python", scriptPath)
+	cmd := exec.Command(pythonExec, scriptPath)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

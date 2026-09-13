@@ -295,15 +295,25 @@ class DiggerEngine:
 def run():
     console.print(Panel.fit("[bold magenta]digger — Cross-Service Log Correlation[/bold magenta]"))
 
-    log_dir = "./logs"
+    while True:
+        try:
+            log_dir = input("\nEnter path to logs directory [./logs]: ").strip()
+        except (KeyboardInterrupt, EOFError):
+            return
+            
+        if not log_dir:
+            log_dir = "./logs"
+            
+        if not os.path.exists(log_dir) or not os.path.isdir(log_dir):
+            console.print(f"[red]Directory '{log_dir}' not found. Please try again.[/red]")
+            continue
+            
+        break
+
     engine = DiggerEngine()
     engine.load_logs_from_dir(log_dir)
 
-    with open("combined.log", "w", encoding="utf-8") as f:
-        for entry in engine.entries:
-            time_str = entry.timestamp.strftime('%H:%M:%S.%f')[:-3] if entry.timestamp else "unknown"
-            f.write(f"[{time_str}] [{entry.severity}] {entry.service}: {entry.raw_text}\n")
-    console.print("\n[green]Saved full chronological combined log to combined.log[/green]")
+
 
     console.print("[dim]Type 'help' for commands, or 'exit' to quit.[/dim]")
     while True:
@@ -320,19 +330,52 @@ def run():
         
         if base_cmd in ["exit", "quit"]:
             break
-        elif base_cmd == "errors":
+        elif base_cmd in ["errors", "error"]:
             engine.digger_scan()
-        elif base_cmd == "trace":
+        elif base_cmd in ["trace", "uuid"]:
             if len(parts) < 2:
                 console.print("[red]Usage: trace <UID>[/red]")
             else:
                 uid = parts[1]
                 engine.get_context_for_ids([uid])
+        elif base_cmd == "merge":
+            if len(parts) < 2:
+                console.print("[red]Usage: merge all OR merge <service1> <service2>...[/red]")
+                continue
+            
+            target_services = parts[1:]
+            merge_all = "all" in [s.lower() for s in target_services]
+            
+            entries_to_merge = []
+            if merge_all:
+                entries_to_merge = engine.entries
+            else:
+                entries_to_merge = [e for e in engine.entries if e.service in target_services]
+                if not entries_to_merge:
+                    console.print(f"[red]No entries found for services: {', '.join(target_services)}[/red]")
+                    continue
+            
+            with open("combined.log", "w", encoding="utf-8") as f:
+                for entry in entries_to_merge:
+                    time_str = entry.timestamp.strftime('%H:%M:%S.%f')[:-3] if entry.timestamp else "unknown"
+                    f.write(f"[{time_str}] [{entry.severity}] {entry.service}: {entry.raw_text}\n")
+            
+            svc_list = "all services" if merge_all else ", ".join(target_services)
+            console.print(f"[green]Saved chronological combined log for {svc_list} to combined.log[/green]")
+            
         elif base_cmd == "help":
-            console.print("Commands: [cyan]errors[/cyan], [cyan]trace <UID>[/cyan], [cyan]exit[/cyan]")
+            table = Table(title="Digger Commands", show_header=True, header_style="bold magenta")
+            table.add_column("Command")
+            table.add_column("Description")
+            table.add_row("help", "Show this help message")
+            table.add_row("errors", "Scan all logs and extract ERROR/FATAL events")
+            table.add_row("trace <UUID>", "Correlate and build a timeline across all microservices for a specific UUID (alias: uuid)")
+            table.add_row("merge all", "Combine all logs chronologically into combined.log")
+            table.add_row("merge <s1> <s2>", "Combine specific service logs (e.g., 'merge web payment')")
+            table.add_row("exit, quit", "Exit the Digger shell")
+            console.print(table)
         else:
-            console.print(f"[red]Unknown command: {base_cmd}[/red]")
-
+            console.print(f"[red]Unknown command: {base_cmd}[/red] Type 'help' to see available commands.")
 
 if __name__ == "__main__":
     run()
