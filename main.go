@@ -74,13 +74,13 @@ func initialModel() model {
 				name:        "griffith (CI/CD Parser)",
 				branch:      "griffith",
 				description: "CI/CD Pipeline Error Summarizer.\nAuto-discovers broken CI/CD pipelines via the public GitHub API\nand downloads the raw logs. It is designed to extract\nhuman-readable error summaries from massive 500+ line pipeline breakages.",
-				scriptPath:  "cicd_parser/parser.py",
+				scriptPath:  "omnix/triage.py",
 			},
 			{
 				name:        "conrad (LLM Sandbox)",
 				branch:      "conrad",
 				description: "Local LLM Sandbox & Agent Manager.\nRuns a local LLM strictly within the terminal sandbox and\nevaluates the output of two sub-agents against specific rule sets,\nmonitored by a larger overarching model.",
-				scriptPath:  "llm_sandbox/sandbox.py",
+				scriptPath:  "GodsHand/agents/conrad.py",
 			},
 			{
 				name:        "Exit Toolkit",
