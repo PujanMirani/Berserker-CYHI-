@@ -139,7 +139,7 @@ func (m model) View() string {
 		fmt.Sprintf("%s\n%s", highlightStyle.Render("Welcome to Berserker Toolkit!"), time.Now().Format("15:04:05")),
 	)
 	
-	avatarBox := baseStyle.Align(lipgloss.Left).Render(
+	avatarBox := baseStyle.Width(leftWidth).Align(lipgloss.Center).Render(
 		titleStyle.Render(avatarAscii),
 	)
 
@@ -153,7 +153,7 @@ func (m model) View() string {
 	leftCol := lipgloss.JoinVertical(lipgloss.Left, welcomeBox, avatarBox, controlsBox)
 
 	// RIGHT COLUMN PANELS
-	logoBox := baseStyle.Align(lipgloss.Center).Render(
+	logoBox := baseStyle.Width(rightWidth).Align(lipgloss.Center).Render(
 		titleStyle.Render(logoAscii),
 	)
 
