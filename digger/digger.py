@@ -224,7 +224,7 @@ class DiggerEngine:
         # Real timestamps now exist per-line, so this sort actually reflects
         # true chronological order across services, not just file order.
         self.entries.sort(key=lambda x: (x.timestamp is not None, x.timestamp.timestamp() if x.timestamp else 0))
-        console.print(f"[green]✓ Successfully parsed {len(self.entries)} entries into standardized LogEntry format.[/green]")
+        console.print(f"[green]Successfully parsed {len(self.entries)} entries into standardized LogEntry format.[/green]")
 
     def digger_scan(self):
         """Auto-lists every ERROR/FATAL line"""
@@ -233,7 +233,7 @@ class DiggerEngine:
             console.print("[green]No ERROR or FATAL logs found![/green]")
             return None
 
-        table = Table(title="🚨 Digger Scan: Detected Errors")
+        table = Table(title="Digger Scan: Detected Errors")
         table.add_column("File:Line", style="dim")
         table.add_column("Service", style="cyan")
         table.add_column("Message", style="red")
@@ -266,7 +266,7 @@ class DiggerEngine:
 
         matched.sort(key=lambda x: x.timestamp.timestamp() if x.timestamp else 0)
 
-        table = Table(title=f"🔍 Correlation Timeline for: [bold cyan]{', '.join(tokens)}[/bold cyan]")
+        table = Table(title=f"Correlation Timeline for: [bold cyan]{', '.join(tokens)}[/bold cyan]")
         table.add_column("Time", style="dim")
         table.add_column("Service", style="cyan")
         table.add_column("Level")
@@ -294,7 +294,7 @@ class DiggerEngine:
 
 def run():
     import questionary
-    console.print(Panel.fit("[bold magenta]🔍 digger — Cross-Service Log Correlation[/bold magenta]"))
+    console.print(Panel.fit("[bold magenta]digger — Cross-Service Log Correlation[/bold magenta]"))
 
     log_dir = "./logs"
     engine = DiggerEngine()
@@ -325,6 +325,12 @@ def run():
 
         engine.get_context_for_ids(selected_err.identifiers, anchor=selected_err)
         input("\nPress Enter to return to scan list...")
+        
+    with open("combined.log", "w", encoding="utf-8") as f:
+        for entry in engine.entries:
+            time_str = entry.timestamp.strftime('%H:%M:%S.%f')[:-3] if entry.timestamp else "unknown"
+            f.write(f"[{time_str}] [{entry.severity}] {entry.service}: {entry.raw_text}\n")
+    console.print("\n[green]Saved full chronological combined log to combined.log[/green]")
 
 
 if __name__ == "__main__":
